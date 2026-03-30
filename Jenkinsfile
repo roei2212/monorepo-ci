@@ -2,17 +2,58 @@ pipeline {
     agent any
 
     stages {
-        stage('Init') {
+
+        stage('Detect Changed Services') {
             steps {
-                echo "Jenkins Pipeline Started"
+                script {
+                    echo "Detecting changed services..."
+
+                    // קבלת קבצים שהשתנו
+                    def diff = sh(
+                        script: "git diff --name-only origin/main...HEAD || true",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Changed files:\n${diff}"
+
+                    // הפקת שמות שירותים
+                    changedServices = diff
+                        .split('\n')
+                        .collect { it.split('/')[0] }
+                        .unique()
+                        .findAll { it in ['user-service', 'transaction-service', 'notification-service'] }
+
+                    if (changedServices.isEmpty()) {
+                        echo "No services changed. Skipping CI."
+                        currentBuild.result = 'SUCCESS'
+                        return
+                    }
+
+                    echo "Services changed: ${changedServices}"
+                }
             }
         }
 
-        stage('Run CI Scripts') {
+        stage('Run CI for Changed Services') {
+            when {
+                expression { return changedServices && changedServices.size() > 0 }
+            }
             steps {
-                sh 'bash shared/ci/lint.sh user-service'
-                sh 'bash shared/ci/test.sh user-service'
-                sh 'bash shared/ci/scan.sh user-service'
+                script {
+                    def tasks = [:]
+
+                    changedServices.each { svc ->
+                        tasks[svc] = {
+                            stage("CI for ${svc}") {
+                                sh "bash shared/ci/lint.sh ${svc}"
+                                sh "bash shared/ci/test.sh ${svc}"
+                                sh "bash shared/ci/scan.sh ${svc}"
+                            }
+                        }
+                    }
+
+                    parallel tasks
+                }
             }
         }
     }
