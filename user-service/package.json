@@ -1,0 +1,14 @@
+{
+  "name": "user-service",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "lint": "eslint .",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0"
+  }
+}
