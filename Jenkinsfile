@@ -8,15 +8,15 @@ pipeline {
                 script {
                     echo "Detecting changed services..."
 
-                    // קבלת קבצים שהשתנו
+                    // זיהוי קבצים שהשתנו בין הקומיט האחרון לקודם
                     def diff = sh(
-                        script: "git diff --name-only origin/main...HEAD || true",
+                        script: "git diff --name-only HEAD~1 HEAD || true",
                         returnStdout: true
                     ).trim()
 
                     echo "Changed files:\n${diff}"
 
-                    // הפקת שמות שירותים
+                    // הפקת שמות השירותים שהשתנו
                     changedServices = diff
                         .split('\n')
                         .collect { it.split('/')[0] }
