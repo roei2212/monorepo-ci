@@ -14,7 +14,7 @@ case "${SERVICE}" in
     ;;
   transaction-service)
     pushd transaction-service > /dev/null
-    python -m pip install -r requirements.txt
+    python3 -m pip install -r requirements.txt
     flake8 . || pylint . || exit 1
     popd > /dev/null
     ;;
