@@ -9,7 +9,7 @@ case "${SERVICE}" in
   user-service)
     pushd user-service > /dev/null
     npm install
-    npm test -- --ci --reporters=junit --reporter-options "outputFile=reports/junit/junit.xml"
+    npm test
     popd > /dev/null
     ;;
   transaction-service)
