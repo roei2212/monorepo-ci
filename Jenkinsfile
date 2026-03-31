@@ -14,9 +14,6 @@ pipeline {
 
     stages {
 
-        /* -------------------------
-           CHECKOUT
-        -------------------------- */
         stage('Checkout') {
             when {
                 anyOf {
@@ -29,9 +26,6 @@ pipeline {
             }
         }
 
-        /* -------------------------
-           DETECT CHANGED SERVICES
-        -------------------------- */
         stage('Detect Changed Services') {
             steps {
                 script {
@@ -56,19 +50,17 @@ pipeline {
         }
 
         /* -------------------------
-           SECRETS SCAN (REPO-WIDE)
+           SECRETS SCAN (Docker-based)
         -------------------------- */
         stage('Secrets Scan') {
             steps {
-                script {
-                    sh "gitleaks detect --source . --no-banner"
-                }
+                sh """
+                    docker run --rm -v \$(pwd):/repo zricethezav/gitleaks:latest \
+                    detect -s /repo --no-banner
+                """
             }
         }
 
-        /* -------------------------
-           LINT
-        -------------------------- */
         stage('Lint') {
             when { expression { env.CHANGED_SERVICES } }
             steps {
@@ -106,9 +98,6 @@ pipeline {
             }
         }
 
-        /* -------------------------
-           TESTS + REPORTS
-        -------------------------- */
         stage('Tests') {
             when { expression { env.CHANGED_SERVICES } }
             steps {
@@ -146,9 +135,6 @@ pipeline {
             }
         }
 
-        /* -------------------------
-           SECURITY (SAST)
-        -------------------------- */
         stage('Security') {
             when { expression { env.CHANGED_SERVICES } }
             steps {
@@ -188,9 +174,6 @@ pipeline {
             }
         }
 
-        /* -------------------------
-           DOCKER BUILD & PUSH
-        -------------------------- */
         stage('Docker Build & Push') {
             when { expression { env.CHANGED_SERVICES } }
             steps {
@@ -218,9 +201,6 @@ pipeline {
             }
         }
 
-        /* -------------------------
-           MANUAL APPROVAL
-        -------------------------- */
         stage('Ready for Deploy') {
             when { expression { env.CHANGED_SERVICES } }
             steps {
@@ -229,9 +209,6 @@ pipeline {
         }
     }
 
-    /* -------------------------
-       SLACK NOTIFICATIONS
-    -------------------------- */
     post {
         success {
             script {
