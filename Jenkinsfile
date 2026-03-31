@@ -8,9 +8,7 @@ pipeline {
 
     environment {
         SERVICES = "user-service,transaction-service,notification-service"
-        REGISTRY = "your-docker-registry.example.com"
-        REGISTRY_CREDENTIALS = "docker-registry-creds"
-        SLACK_WEBHOOK_CREDENTIALS = "slack-webhook"
+        REGISTRY_CREDENTIALS = "Dockerhub-roei"
     }
 
     stages {
@@ -171,21 +169,22 @@ pipeline {
                     def sha = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
                     def tasks = [:]
 
-                    docker.withRegistry("https://${env.REGISTRY}", env.REGISTRY_CREDENTIALS) {
+                    env.CHANGED_SERVICES.split(',').each { svc ->
+                        tasks[svc] = {
+                            stage("Docker: ${svc}") {
 
-                        env.CHANGED_SERVICES.split(',').each { svc ->
-                            tasks[svc] = {
-                                stage("Docker: ${svc}") {
+                                withDockerRegistry([url: "https://index.docker.io/v1/", credentialsId: env.REGISTRY_CREDENTIALS]) {
                                     sh """
-                                      docker build -t ${env.REGISTRY}/${svc}:ci-${sha} ${svc}
-                                      docker push ${env.REGISTRY}/${svc}:ci-${sha}
+                                        docker build -t roei2212/${svc}:${sha} ${svc}
+                                        docker push roei2212/${svc}:${sha}
                                     """
                                 }
+
                             }
                         }
-
-                        parallel tasks
                     }
+
+                    parallel tasks
                 }
             }
         }
