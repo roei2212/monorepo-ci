@@ -55,7 +55,7 @@ pipeline {
         stage('Secrets Scan') {
             steps {
                 sh """
-                    docker run --rm -v \$(pwd):/repo zricethezav/gitleaks:latest \
+                    docker run --rm -v "\$(pwd):/repo" zricethezav/gitleaks:latest \
                     detect -s /repo --no-banner
                 """
             }
